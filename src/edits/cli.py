@@ -16,7 +16,7 @@ def main():
     ingest = sub.add_parser('ingest'); ingest.add_argument('source', type=Path)
     analyze = sub.add_parser('analyze'); analyze.add_argument('source', type=Path)
     render = sub.add_parser('render'); render.add_argument('plan', type=Path)
-    render.add_argument('--profile', choices=['clean','accent','cinema'], default='clean')
+    render.add_argument('--profile', choices=['clean','accent','cinema','intrigue'], default='clean')
     render.add_argument('--preview', action='store_true')
     check = sub.add_parser('check'); check.add_argument('file', type=Path)
     approve = sub.add_parser('approve'); approve.add_argument('sha256')
