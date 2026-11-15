@@ -1,0 +1,16 @@
+{
+  "id": "story-01",
+  "source": "D:/Movies/movie.mkv",
+  "scene_map": ".local/analysis/SOURCE_SHA256.json",
+  "audio_track": 0,
+  "rating": "strong",
+  "story": {
+    "hook": "Какой конфликт понятен с первой реплики?",
+    "development": "Как ситуация меняется?",
+    "payoff": "Что завершает историю?",
+    "context": "Что нужно знать зрителю, не видевшему фильм?",
+    "selection_reason": "Почему это сильный кандидат по сравнению с другими сценами полного фильма?"
+  },
+  "segments": [{"start": 100.0, "end": 125.0}],
+  "captions": [{"start": 0.2, "end": 1.8, "text": "Точная услышанная реплика"}]
+}
