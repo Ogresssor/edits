@@ -1,14 +1,18 @@
-name: Core tests
+name: Go core and media tests
 on: [push, pull_request]
 jobs:
   core:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
-          python-version: '3.11'
-      - run: python -m unittest discover -s tests -v
+          go-version: stable
+          cache: false
+      - run: go vet ./...
+      - run: go test -race ./...
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: python tests/smoke_render.py
-      - run: python tests/negative_render.py
+      - run: go test -count=1 -v ./internal/studio -run TestFFmpegIntegration
+        env:
+          EDITS_INTEGRATION: '1'
+      - run: CGO_ENABLED=0 go build -trimpath -o edits ./cmd/edits
