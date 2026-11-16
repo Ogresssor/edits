@@ -5,7 +5,7 @@ PROFILES = {
     'cinema': dict(size=54, primary='&H00EAEAEA', outline=2, italic=0),
     'intrigue': dict(size=60, primary='&H00FFFFFF', outline=2.5, italic=0),
 }
-VERSION = 'caption-design-2026-11-15.2'
+VERSION = 'caption-design-2026-11-15.3'
 
 
 def ass_time(value):
@@ -50,10 +50,30 @@ def captions(plan, profile, width, height):
               '[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n')
     events = []
     for c in plan.get('captions', []):
-        content = caption_text(c, profile, scale)
-        # Brief entrance, not incessant word-by-word jumping or looping animation.
-        content = r'{\fad(55,55)}' + content
-        events.append(f"Dialogue: 1,{ass_time(c['start'])},{ass_time(c['end'])},Default,,0,0,0,,{content}\n")
+        motion=plan.get('text_motion','none')
+        if motion=='reveal':
+            # Transparent unrevealed words retain the final layout; no reflow/jumping.
+            words=c['words']
+            for index,word in enumerate(words):
+                end=words[index+1]['start'] if index+1<len(words) else c['end']
+                if end<=word['start']:continue
+                pieces=[]
+                for j,w in enumerate(words):
+                    is_accent=bool(c.get('highlight') and w['text'] in c['highlight'].split())
+                    linebreak=(r'\N' if is_accent and j>0 and words[j-1]['text'] not in c['highlight'].split() else (' ' if j else ''))
+                    color=r'\c&H6BE8C6&' if is_accent else r'\c&HFFFFFF&'
+                    size=round((96 if is_accent else PROFILES[profile]['size'])*scale)
+                    alpha=r'\alpha&H00&' if j<=index else r'\alpha&HFF&'
+                    # Only the newly spoken word gets a short settling animation.
+                    movement=r'\fscx94\fscy94\t(0,110,\fscx100\fscy100)' if j==index else r'\fscx100\fscy100'
+                    token=w['text'].upper() if profile=='accent' else w['text']
+                    pieces.append(linebreak+'{'+color+fr'\fs{size}'+alpha+movement+'}'+token)
+                events.append(f"Dialogue: 1,{ass_time(word['start'])},{ass_time(end)},Default,,0,0,0,,{''.join(pieces)}\n")
+        else:
+            content=caption_text(c,profile,scale)
+            entrance=(r'{\fad(45,55)\fscx92\fscy92\t(0,110,\fscx103\fscy103)\t(110,180,\fscx100\fscy100)}'
+                      if motion=='pop' else r'{\fad(55,55)}')
+            events.append(f"Dialogue: 1,{ass_time(c['start'])},{ass_time(c['end'])},Default,,0,0,0,,{entrance+content}\n")
     duration = sum(s['end']-s['start'] for s in plan['segments'])
     if profile == 'intrigue' and plan.get('on_screen_hook'):
         hook = plain(plan['on_screen_hook'], 55)

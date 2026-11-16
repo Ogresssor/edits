@@ -10,6 +10,7 @@ from . import media
 from .core import canonical, read, save, sha256, validate_plan, job_lock
 from .analysis import require_coverage
 from .design import PROFILES, VERSION as DESIGN_VERSION, captions
+from .motion import VERSION as MOTION_VERSION, video_filters
 
 def render(plan_path: Path, store, profile='clean', preview=False):
     key = canonical(dict(plan=read(plan_path), profile=profile, preview=preview))
@@ -34,7 +35,7 @@ def _render(plan_path: Path, store, profile, preview):
     if not font_files:
         raise ValueError('Bundled fonts are missing')
     identity = dict(plan=plan, source_sha256=source_digest, profile=profile, preview=preview,
-                    renderer='ffmpeg-v2.3', design_version=DESIGN_VERSION, ffmpeg=media.executable(),
+                    renderer='ffmpeg-v2.4', design_version=DESIGN_VERSION, motion_version=MOTION_VERSION, ffmpeg=media.executable(),
                     font_sha256={f.name:sha256(f) for f in font_files})
     if music:
         identity['music_sha256'] = sha256(Path(music['path']))
@@ -61,8 +62,9 @@ def _render(plan_path: Path, store, profile, preview):
                         f'[bg{index}][fg{index}]overlay=(W-w)/2:(H-h)/2[v{index}]']
         filters += [f'[{index}:a:{audio_track}]atrim=duration={length},asetpts=PTS-STARTPTS,aresample=48000[a{index}]']
         links.append(f'[v{index}][a{index}]')
-    filters += [''.join(links) + f'concat=n={len(links)}:v=1:a=1[vjoin][voice]',
-                '[vjoin]ass=captions.ass:fontsdir=.[vout]']
+    filters += [''.join(links) + f'concat=n={len(links)}:v=1:a=1[vjoin][voice]']
+    accents,current=video_filters(plan.get('scene_effects',[]),width,height,info['fps'])
+    filters += accents+[f'[{current}]ass=captions.ass:fontsdir=.[vout]']
     if music:
         index = len(plan['segments'])
         args += ['-stream_loop', '-1', '-i', str(Path(music['path']).resolve())]

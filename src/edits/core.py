@@ -93,6 +93,8 @@ def validate_plan(plan):
     if plan.get('music'):
         if not isinstance(plan['music'],dict) or not all(plan['music'].get(k) for k in ('path', 'creator', 'title', 'license_url', 'source_url')):
             raise ValueError('Music requires provenance and license')
+    from .motion import validate
+    validate(plan,duration)
     return duration
 
 
